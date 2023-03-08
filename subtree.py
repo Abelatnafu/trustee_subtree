@@ -3,7 +3,24 @@ from trustee.utils.tree import get_dt_dict
 
 
 
-def get_subtree(dt, target_class, class_labels, features, threshold = -1):
+def get_subtree(dt, target_class, class_labels, features, threshold = "quart impurity", full_tree = False, custom_threshold = 3):
+    """
+
+    :param dt:
+    :param target_class: The class you seek to find
+    :param class_labels: list of class labels
+    :param features: list of features
+    :param threshold: Threshold types = ["quart impurity", "custom", "avg imp change", "full tree"]
+            quart impurity: till the first ancestor with gini value above 25%
+            custom: till custom threshold value inputed by the custom_threshold param
+            avg imp change: avg all the imp change in the branches then print all nodes with less than the avg change
+            full tree: output the whole subtree
+
+    :param full_tree: You want the full tree or not?
+    :param custom_threshold: if threshold type if custom, input the custom threshold amount
+    :return: N/A
+    """
+    # Threshold types = ["quart impurity", "custom", "avg imp change", "full tree"]
     # change tree to dict
     dict_dt = get_dt_dict(dt)
     # node details
@@ -42,23 +59,77 @@ def get_subtree(dt, target_class, class_labels, features, threshold = -1):
     # sub_tree.append(nodes[targ[0]])
     # k = targ[0]
     # Function to walk through all possible target leaf
-    def walk_back (index, threshold):
+    def walk_back (index, threshold, full_tree):
         sub_tree = []
         # start by appending target leaf node and its index
         sub_tree.append((nodes[targ[index]], targ[index]))
         k = targ[index]
 
-        if threshold == -1:
-            # while node has a parent
-            while k in prev.keys():
-                k = prev[k]
-                sub_tree.append((nodes[k], k))
-        else:
-            # Threshold not implemented yet
-            while k in prev.keys() and threshold > 0:
-                k = prev[k]
-                sub_tree.append((nodes[k], k))
-                threshold -= 1
+        # if threshold == -1:
+
+
+
+
+
+
+        # while node has a parent
+        while k in prev.keys():
+            k = prev[k]
+            sub_tree.append((nodes[k], k))
+
+        # print(f"{sub_tree=}")
+        height = len(sub_tree)
+        if full_tree == False:
+            if threshold == "quart impurity":
+
+                i= 0
+                quart = []
+                while i < len(sub_tree) and sub_tree[i][0][4] <= 0.25:
+                    quart.append(sub_tree[i])
+                    i += 1
+                if len(quart) < 2:
+                    quart.append(sub_tree[1])
+                sub_tree = quart
+            elif threshold == "custom":
+                if custom_threshold < len(sub_tree):
+                    sub_tree = sub_tree[:custom_threshold+1]
+                else:
+                    full_tree = True
+            elif threshold == "avg imp change":
+                avg_imp_change = 0
+                siz = len(sub_tree) - 1
+                imp_change_list = []
+                for i in range(siz):
+                    avg_imp_change += abs((sub_tree[i][0][4] - sub_tree[i+1][0][4])/(siz))
+                for i in range(siz):
+                    # print(f"{i=}\n{imp_change_list=}\n{avg_imp_change=}\n{sub_tree=}")
+                    if abs(sub_tree[i][0][4] - sub_tree[i+1][0][4]) < avg_imp_change:
+                        if i == 0:
+                            imp_change_list.append(sub_tree[i])
+                            imp_change_list.append(sub_tree[i+1])
+                        else:
+                            imp_change_list.append(sub_tree[i+1])
+                    elif i == 0:
+                        imp_change_list.append(sub_tree[i])
+                        imp_change_list.append(sub_tree[i + 1])
+                    else:
+                        break
+                print(f"The average impurity change is {round(avg_imp_change*100, 2)}%. ")
+                sub_tree = imp_change_list
+            elif threshold == "full tree":
+                full_tree = True
+            else:
+                print(f"*+*+*+*+*+*+*+ {threshold} is not a valid threshold type!*+*+*+*+*+*+*+")
+                return
+        # print(f"{sub_tree=}")
+        # reverse subtree to start from root
+        sub_tree = sub_tree[::-1]
+        # else:
+        #     # Threshold not implemented yet
+        #     while k in prev.keys() and threshold > 0:
+        #         k = prev[k]
+        #         sub_tree.append((nodes[k], k))
+        #         threshold -= 1
 
         # print(prev)
         # print(child)
@@ -67,21 +138,28 @@ def get_subtree(dt, target_class, class_labels, features, threshold = -1):
         details = ["feature", "threshold", "impurity", "samples", "weighted_samples"]
 
         print(f"Target class is {class_labels[target_class]}.")
-        print(f"The height of the Target leaf is {len(sub_tree)}.")
+        print(f"The height of the Target leaf is {height}.")
+        print(f"The Threshold type is {threshold}.")
         print("+++++++++++++++")
 
         # Keep track of family line
         ancestor = len(sub_tree) - 2
-        # reverse subtree to start from root
-        sub_tree = sub_tree[::-1]
+
         ishead = False
         for path in range(len(sub_tree)):
             # If its not the target leaf node
             if path != (len(sub_tree) - 1):
                 # Top of the tree
                 if path == 0:
-                    print("***Root***")
+                    if full_tree == True:
+                        print("***Root***")
+                    elif path == len(sub_tree) - 2:
+                        print(f"***Parent***")
+                    else:
+                        print(f"***Ancestor {ancestor}***")
+                        ancestor -= 1
                     ishead = True
+
 
                 # Parent of target leaf node
                 elif path == len(sub_tree) - 2:
@@ -95,6 +173,7 @@ def get_subtree(dt, target_class, class_labels, features, threshold = -1):
                     ancestor -= 1
 
                 # If not head then print the branching logic
+                # print(f"{path=}")
                 if not ishead:
                     print(f"Branching from previous node logic = \'{'<=' if (child[sub_tree[path - 1][1]][0] == sub_tree[path][1]) else '>'}'")
 
@@ -127,5 +206,5 @@ def get_subtree(dt, target_class, class_labels, features, threshold = -1):
     # for each target leaf node
     for targets_ in range(len(targ)):
         print(f"*****************Sub-tree {targets_}*****************")
-        walk_back(targets_, threshold)
+        walk_back(targets_, threshold, full_tree)
 
