@@ -12,6 +12,7 @@ Prints subtrees that lead to a target classfication.
 3. Self Made decision tree from other datasets
 
   a)<img width="1400" alt="Screenshot 2023-04-16 at 4 53 16 PM" src="https://user-images.githubusercontent.com/69553149/232350602-922e4023-1b0e-453d-a597-7a9378a785f7.png">
-  b) <img width="689" alt="Screenshot 2023-04-16 at 4 56 28 PM" src="https://user-images.githubusercontent.com/69553149/232350814-620e3aaf-d40e-4560-8028-1aec3e1eb2f5.png">
+  b)<img width="924" alt="Screenshot 2023-04-16 at 4 58 17 PM" src="https://user-images.githubusercontent.com/69553149/232350925-78316213-51d2-4ace-9b74-ad44b05ff0b6.png">
+
 
 
